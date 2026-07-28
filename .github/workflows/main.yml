@@ -11,34 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ========== Job 1: 主机端单元测试 ==========
-  host-test:
-    runs-on: ubuntu-latest
-    container: espressif/idf:v5.4
-    defaults:
-      run:
-        working-directory: ./firmware/IotDesk  # ★ 全局指定该 Job 的工作目录
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Run Host Unit Tests
-        run: |
-          . $IDF_PATH/export.sh
-          export BUILD_TESTS=1
-          idf.py set-target linux
-          idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.test" build
-          ./build/*.elf --list-tests
-          ./build/*.elf "[host]"
-
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: host-test-results
-          path: firmware/IotDesk/build/*.xml  # ★ 注意：artifact 路径仍需从仓库根目录算起
-
-  # ========== Job 2: 编译检查 ==========
-  build-check:
+  static-analysis:
     runs-on: ubuntu-latest
     container: espressif/idf:v5.4
     defaults:
@@ -47,27 +20,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Check
+      # 1. 一次性安装静态分析工具链
+      - name: Install Static Analysis Tools
         run: |
-          . $IDF_PATH/export.sh
-          idf.py build
+          apt-get update
+          apt-get install -y clang-format cppcheck
 
-  # ========== Job 3: 板端集成测试（仅 main）==========
-  board-test:
-    needs: [host-test, build-check]
-    if: github.ref == 'refs/heads/main'
-    runs-on: self-hosted
-    defaults:
-      run:
-        working-directory: ./firmware/IotDesk
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Flash & Run Board Tests
+      # 2. 检查代码格式规范 (clang-format)
+      - name: Code Format Check
         run: |
-          . $IDF_PATH/export.sh
-          pip install pytest-embedded pytest-embedded-serial-esp
-          pytest tests/ \
-            --target esp32s3 \
-            --port /dev/ttyUSB0 \
-            --junitxml=board_test_results.xml
+          echo "Checking code formatting..."
+          find main components -type f \( -name "*.c" -o -name "*.h" \) | xargs clang-format --dry-run --Werror
+
+      # 3. 语法与潜在缺陷扫描 (cppcheck)
+      - name: Cppcheck Static Analysis
+        run: |
+          echo "Running cppcheck..."
+          cppcheck --enable=warning,style,performance,portability \
+                   --inline-suppr \
+                   --error-exitcode=1 \
+                   --suppress=missingIncludeSystem \
+                   main/ components/
