@@ -39,7 +39,7 @@ jobs:
   # ========== Job 2: 编译检查 ==========
   build-check:
     runs-on: ubuntu-latest
-    container: espressif/idf:v5.3
+    container: espressif/idf:v5.4
     defaults:
       run:
         working-directory: ./firmware/IotDesk
