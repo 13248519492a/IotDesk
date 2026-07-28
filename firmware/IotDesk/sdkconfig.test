@@ -1,0 +1,13 @@
+# ===== 主机测试必需配置 =====
+# 关闭看门狗（Linux 调度延迟会误触发）
+CONFIG_ESP_TASK_WDT=n
+CONFIG_ESP_INT_WDT=n
+
+# 启用 Unity 测试框架
+CONFIG_UNITY_ENABLE_DOUBLE=y
+
+# 提高日志级别方便 CI 排查
+CONFIG_LOG_DEFAULT_LEVEL_VERBOSE=y
+
+# 如果你的代码用了 WiFi/蓝牙，在这里禁用或替换为 mock
+CONFIG_ESP_WIFI_ENABLED=n
