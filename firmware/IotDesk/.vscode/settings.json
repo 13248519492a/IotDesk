@@ -1,0 +1,13 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "clangd.path": "/Users/qiujinyuanxiang/.espressif/tools/esp-clang/esp-18.1.2_20240912/esp-clang/bin/clangd",
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=**",
+    "--compile-commands-dir=/Users/qiujinyuanxiang/Documents/IotDesk/firmware/IotDesk/build"
+  ],
+  "idf.currentSetup": "/Users/qiujinyuanxiang/esp/esp-idf",
+  "idf.customExtraVars": {
+    "IDF_TARGET": "esp32s3"
+  }
+}

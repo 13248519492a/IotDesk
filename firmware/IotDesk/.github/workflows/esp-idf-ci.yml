@@ -1,0 +1,67 @@
+name: ESP-IDF CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ========== Job 1: 主机端单元测试 ==========
+  host-test:
+    runs-on: ubuntu-latest
+    container: espressif/idf:v5.4
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Host Unit Tests
+        run: |
+          . $IDF_PATH/export.sh
+          # ★ 使用 ESP-IDF 原生测试构建目标
+          export BUILD_TESTS=1
+          idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.test" build
+          
+          # 运行主机端测试（仅带 [host] 标签的）
+          ./build/*.elf --list-tests
+          ./build/*.elf "[host]"
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: host-test-results
+          path: build/*.xml  # Unity JUnit 输出
+
+  # ========== Job 2: 编译检查 ==========
+  build-check:
+    runs-on: ubuntu-latest
+    container: espressif/idf:v5.3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Check
+        run: |
+          . $IDF_PATH/export.sh
+          idf.py build
+
+  # ========== Job 3: 板端集成测试（仅 main）==========
+  board-test:
+    needs: [host-test, build-check]
+    if: github.ref == 'refs/heads/main'
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Flash & Run Board Tests
+        run: |
+          . $IDF_PATH/export.sh
+          # ★ pytest-embedded 是 ESP-IDF 官方板端测试工具
+          pip install pytest-embedded pytest-embedded-serial-esp
+          pytest tests/ \
+            --target esp32s3 \
+            --port /dev/ttyUSB0 \
+            --junitxml=board_test_results.xml
