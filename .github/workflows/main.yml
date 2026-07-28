@@ -25,7 +25,7 @@ jobs:
         run: |
           . $IDF_PATH/export.sh
           export BUILD_TESTS=1
-          idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.test" build
+          idf.py --target linux -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.test" build
           ./build/*.elf --list-tests
           ./build/*.elf "[host]"
 
