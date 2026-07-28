@@ -17,7 +17,7 @@ jobs:
     container: espressif/idf:v5.4
     defaults:
       run:
-        working-directory: ./firmware  # ★ 全局指定该 Job 的工作目录
+        working-directory: ./firmware/IotDesk  # ★ 全局指定该 Job 的工作目录
     steps:
       - uses: actions/checkout@v4
 
@@ -34,7 +34,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: host-test-results
-          path: firmware/build/*.xml  # ★ 注意：artifact 路径仍需从仓库根目录算起
+          path: firmware/IotDesk/build/*.xml  # ★ 注意：artifact 路径仍需从仓库根目录算起
 
   # ========== Job 2: 编译检查 ==========
   build-check:
@@ -42,7 +42,7 @@ jobs:
     container: espressif/idf:v5.3
     defaults:
       run:
-        working-directory: ./firmware  # ★ 同上
+        working-directory: ./firmware/IotDesk
     steps:
       - uses: actions/checkout@v4
 
@@ -58,7 +58,7 @@ jobs:
     runs-on: self-hosted
     defaults:
       run:
-        working-directory: ./firmware  # ★ 同上
+        working-directory: ./firmware/IotDesk
     steps:
       - uses: actions/checkout@v4
 
