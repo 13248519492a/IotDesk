@@ -15,17 +15,17 @@ jobs:
   host-test:
     runs-on: ubuntu-latest
     container: espressif/idf:v5.4
+    defaults:
+      run:
+        working-directory: ./firmware  # ★ 全局指定该 Job 的工作目录
     steps:
       - uses: actions/checkout@v4
 
       - name: Run Host Unit Tests
         run: |
           . $IDF_PATH/export.sh
-          # ★ 使用 ESP-IDF 原生测试构建目标
           export BUILD_TESTS=1
           idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.test" build
-          
-          # 运行主机端测试（仅带 [host] 标签的）
           ./build/*.elf --list-tests
           ./build/*.elf "[host]"
 
@@ -34,12 +34,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: host-test-results
-          path: build/*.xml  # Unity JUnit 输出
+          path: firmware/build/*.xml  # ★ 注意：artifact 路径仍需从仓库根目录算起
 
   # ========== Job 2: 编译检查 ==========
   build-check:
     runs-on: ubuntu-latest
     container: espressif/idf:v5.3
+    defaults:
+      run:
+        working-directory: ./firmware  # ★ 同上
     steps:
       - uses: actions/checkout@v4
 
@@ -53,13 +56,15 @@ jobs:
     needs: [host-test, build-check]
     if: github.ref == 'refs/heads/main'
     runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: ./firmware  # ★ 同上
     steps:
       - uses: actions/checkout@v4
 
       - name: Flash & Run Board Tests
         run: |
           . $IDF_PATH/export.sh
-          # ★ pytest-embedded 是 ESP-IDF 官方板端测试工具
           pip install pytest-embedded pytest-embedded-serial-esp
           pytest tests/ \
             --target esp32s3 \
