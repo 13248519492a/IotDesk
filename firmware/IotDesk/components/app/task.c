@@ -12,11 +12,10 @@ static void wifi_sta_cb(wifi_status_t status)
 
 static void core0_task(void *parm)
 {
-    uint32_t bits;
     wifi_sta_init(wifi_sta_cb);
     while (1)
     {
-        bits = event_group_wait_bits(WIFI_CONNECTED_BIT | WIIF_DISCONNECTED_BIT, true, false, portMAX_DELAY);
+        uint32_t bits = event_group_wait_bits(WIFI_CONNECTED_BIT | WIIF_DISCONNECTED_BIT, true, false, portMAX_DELAY);
         if (bits & WIFI_CONNECTED_BIT)
         {
         }
